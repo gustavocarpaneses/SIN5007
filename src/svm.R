@@ -1,6 +1,6 @@
 #carregando pacotes
-install.packages("e1071")
-library("e1071")
+#install.packages("e1071")
+#library("e1071")
 
 #carrega os folds
 foldFileName = "C:/temp/sin5007/data/breast-cancer-wisconsin-with-class-names-fold-%d.data"
@@ -30,6 +30,10 @@ for(t in 1:k){
 }
 
 t = 1
+tp <- 0
+fp <- 0
+tn <- 0
+fn <- 0
 
 for(t in 1:k){
 
@@ -54,20 +58,19 @@ for(t in 1:k){
   
   summary(model)
   
-  #aplica o modelo
+  #aplica o modelo no fold de teste
   pred <- predict(model, myDataWithoutIdentifierAndClassification[[t]])
   
   resultado <- table(pred, myDataClassification[[t]])
   
   print(resultado)
   
-  tp <- resultado[1,1]
-  fp <- resultado[1,2]
-  tn <- resultado[2,2]
-  fn <- resultado[2,1]
-  
-  precisao <- tp/(tp+fp)
-  sensibilidade <- tp/(tp+fn)
-  errototal <- (fn+fp)/(tp+fp+tn+fn)
-
+  tp <- tp + resultado[1,1]
+  fp <- fp + resultado[1,2]
+  tn <- tn + resultado[2,2]
+  fn <- fn + resultado[2,1]
 }
+
+precisao <- tp/(tp+fp)
+sensibilidade <- tp/(tp+fn)
+errototal <- (fn+fp)/(tp+fp+tn+fn)
