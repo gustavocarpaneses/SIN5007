@@ -5,6 +5,11 @@
 #carrega os folds
 foldFileName = "C:/temp/sin5007/data/breast-cancer-wisconsin-with-class-names-fold-%d.data"
 
+#kernelType = "linear"
+#kernelType = "polynomial"
+#kernelType = "radial"
+kernelType = "sigmoid"
+costOfViolation = 1
 pcaComponents = 4
 k = 5
 t = 1
@@ -80,15 +85,15 @@ for(t in 1:k){
   }
   
   #constrói o modelo baseado no training Fold (com todas as características)
-  model <- svm(trainingFold, trainingFoldClassification)
+  model <- svm(trainingFold, trainingFoldClassification, kernel = kernelType, cost = costOfViolation)
   
   #constrói o modelo baseado no training Fold (PCA)
-  modelPca <- svm(trainingFoldPca, trainingFoldClassification)
+  modelPca <- svm(trainingFoldPca, trainingFoldClassification, kernel = kernelType, cost = costOfViolation)
   
   #constrói o modelo baseado no training Fold (RELIEF)
   #quando fizemos o relief identificamos que a última coluna
   #é uma característica irrelevante, por isso 1:8
-  modelRelief <- svm(trainingFold[,1:8], trainingFoldClassification)
+  modelRelief <- svm(trainingFold[,1:8], trainingFoldClassification, kernel = kernelType, cost = costOfViolation)
   
   #summary(model)
   
@@ -125,14 +130,12 @@ for(t in 1:k){
   fnRelief <- fnRelief + resultadoRelief[2,1]
 }
 
-resultadoFinal.precisao <- tp/(tp+fp)
-resultadoFinal.sensibilidade <- tp/(tp+fn)
-resultadoFinal.errototal <- (fn+fp)/(tp+fp+tn+fn)
+#precisão - sensibilidade - erro total
+resultadoFinal <- c(tp/(tp+fp), tp/(tp+fn), (fn+fp)/(tp+fp+tn+fn))
+paste(resultadoFinal, collapse = ",")
 
-resultadoFinalPca.precisao <- tpPca/(tpPca+fpPca)
-resultadoFinalPca.sensibilidade <- tpPca/(tpPca+fnPca)
-resultadoFinalPca.errototal <- (fnPca+fpPca)/(tpPca+fpPca+tnPca+fnPca)
+resultadoFinalPca <- c(tpPca/(tpPca+fpPca), tpPca/(tpPca+fnPca), (fnPca+fpPca)/(tpPca+fpPca+tnPca+fnPca))
+paste(resultadoFinalPca, collapse = ",")
 
-resultadoFinalRelief.precisao <- tpRelief/(tpRelief+fpRelief)
-resultadoFinalRelief.sensibilidade <- tpRelief/(tpRelief+fnRelief)
-resultadoFinalRelief.errototal <- (fnRelief+fpRelief)/(tpRelief+fpRelief+tnRelief+fnRelief)
+resultadoFinalRelief <- c(tpRelief/(tpRelief+fpRelief), tpRelief/(tpRelief+fnRelief), (fnRelief+fpRelief)/(tpRelief+fpRelief+tnRelief+fnRelief))
+paste(resultadoFinalRelief, collapse = ",")
