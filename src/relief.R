@@ -1,3 +1,7 @@
+#carregando pacotes
+install.packages("FSelector")
+library("FSelector")
+
 #carregando arquivo
 myData <- read.csv(file="../data/breast-cancer-wisconsin.data", header=FALSE, sep=",")
 
