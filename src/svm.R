@@ -2,33 +2,72 @@
 install.packages("e1071")
 library("e1071")
 
-#carregando arquivo
-myData <- read.csv(file="C:/temp/sin5007/data/breast-cancer-wisconsin-with-class-names.data", header=FALSE, sep=",")
+#carrega os folds
+foldFileName = "C:/temp/sin5007/data/breast-cancer-wisconsin-with-class-names-fold-%d.data"
 
-#retira a coluna que tem o identificador
-myData.withoutIdentifier <- myData[, 2:11]
+k = 5
+t = 1
 
-#retira a coluna que tem o identificador e a classificação
-myData.withoutIdentifierAndClassification <- myData[, 2:10]
+myData <- list()
+myDataWithoutIdentifier <- list()
+myDataWithoutIdentifierAndClassification <- list()
+myDataClassification <- list()
 
-#apenas a coluna de classificação
-myData.classification <- myData[, 11:11]
+for(t in 1:k){
+  
+  #carregando arquivo
+  myData[[t]] <- read.csv(file=sprintf(foldFileName, t), header=FALSE, sep=",")
+  
+  #retira a coluna que tem o identificador
+  myDataWithoutIdentifier[[t]] <- myData[[t]][, 2:11]
+  
+  #retira a coluna que tem o identificador e a classificação
+  myDataWithoutIdentifierAndClassification[[t]] <- myData[[t]][, 2:10]
+  
+  #apenas a coluna de classificação
+  myDataClassification[[t]] <- myData[[t]][, 11:11]
 
-#constrói o modelo
-model <- svm(myData.withoutIdentifierAndClassification, myData.classification)
+}
 
-summary(model)
+t = 1
 
-#aplica o modelo
-pred <- predict(model, myData.withoutIdentifierAndClassification)
+for(t in 1:k){
 
-resultado <- table(pred, myData.classification)
+  tf = 1
+  
+  trainingFold <- list()
+  trainingFoldClassification <- factor()
+  
+  for(tf in 1:k){
+    #combina todos os folds, exceto o atual (que vai ser utilizado para o teste)
+    if(tf != t){
+      trainingFold <- rbind(trainingFold, myDataWithoutIdentifierAndClassification[[tf]])
+      trainingFoldClassification <- factor(c(
+        as.character(trainingFoldClassification), 
+        as.character(myDataClassification[[tf]])))
+    }
+    
+  }
+  
+  #constrói o modelo
+  model <- svm(trainingFold, trainingFoldClassification)
+  
+  summary(model)
+  
+  #aplica o modelo
+  pred <- predict(model, myDataWithoutIdentifierAndClassification[[t]])
+  
+  resultado <- table(pred, myDataClassification[[t]])
+  
+  print(resultado)
+  
+  tp <- resultado[1,1]
+  fp <- resultado[1,2]
+  tn <- resultado[2,2]
+  fn <- resultado[2,1]
+  
+  precisao <- tp/(tp+fp)
+  sensibilidade <- tp/(tp+fn)
+  errototal <- (fn+fp)/(tp+fp+tn+fn)
 
-tp <- resultado[1,1]
-fp <- resultado[1,2]
-tn <- resultado[2,2]
-fn <- resultado[2,1]
-
-precisao <- tp/(tp+fp)
-sensibilidade <- tp/(tp+fn)
-errototal <- (fn+fp)/(tp+fp+tn+fn)
+}
