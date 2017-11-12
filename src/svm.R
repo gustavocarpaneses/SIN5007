@@ -5,12 +5,14 @@
 #carrega os folds
 foldFileName = "C:/temp/sin5007/data/breast-cancer-wisconsin-with-class-names-fold-%d.data"
 
+pcaComponents = 4
 k = 5
 t = 1
 
 myData <- list()
 myDataWithoutIdentifier <- list()
 myDataWithoutIdentifierAndClassification <- list()
+myPcaDataWithoutIdentifierAndClassification <- list()
 myDataClassification <- list()
 
 for(t in 1:k){
@@ -24,6 +26,9 @@ for(t in 1:k){
   #retira a coluna que tem o identificador e a classificação
   myDataWithoutIdentifierAndClassification[[t]] <- myData[[t]][, 2:10]
   
+  res.pca <- princomp(myDataWithoutIdentifierAndClassification[[t]])
+  myPcaDataWithoutIdentifierAndClassification[[t]] <- res.pca$scores[,1:pcaComponents]
+  
   #apenas a coluna de classificação
   myDataClassification[[t]] <- myData[[t]][, 11:11]
 
@@ -34,6 +39,15 @@ tp <- 0
 fp <- 0
 tn <- 0
 fn <- 0
+
+tpPca <- 0
+fpPca <- 0
+tnPca <- 0
+fnPca <- 0
+
+if(exists("trainingFoldPca")){
+  remove("trainingFoldPca")
+}
 
 for(t in 1:k){
 
@@ -46,6 +60,13 @@ for(t in 1:k){
     #combina todos os folds, exceto o atual (que vai ser utilizado para o teste)
     if(tf != t){
       trainingFold <- rbind(trainingFold, myDataWithoutIdentifierAndClassification[[tf]])
+      
+      if(!exists("trainingFoldPca")){
+        trainingFoldPca <- myPcaDataWithoutIdentifierAndClassification[[tf]]
+      }else{
+        trainingFoldPca <- rbind(trainingFoldPca, myPcaDataWithoutIdentifierAndClassification[[tf]])  
+      }
+      
       trainingFoldClassification <- factor(c(
         as.character(trainingFoldClassification), 
         as.character(myDataClassification[[tf]])))
@@ -53,24 +74,41 @@ for(t in 1:k){
     
   }
   
-  #constrói o modelo
+  #constrói o modelo baseado no training Fold (com todas as características)
   model <- svm(trainingFold, trainingFoldClassification)
   
-  summary(model)
+  #constrói o modelo baseado no training Fold (PCA)
+  modelPca <- svm(trainingFoldPca, trainingFoldClassification)
+  
+  #summary(model)
   
   #aplica o modelo no fold de teste
   pred <- predict(model, myDataWithoutIdentifierAndClassification[[t]])
   
+  #aplica o modelo no fold de teste (PCA)
+  predPca <- predict(modelPca, myPcaDataWithoutIdentifierAndClassification[[t]])
+  
   resultado <- table(pred, myDataClassification[[t]])
+  resultadoPca <- table(predPca, myDataClassification[[t]])
   
   print(resultado)
+  print(resultadoPca)
   
   tp <- tp + resultado[1,1]
   fp <- fp + resultado[1,2]
   tn <- tn + resultado[2,2]
   fn <- fn + resultado[2,1]
+  
+  tpPca <- tpPca + resultadoPca[1,1]
+  fpPca <- fpPca + resultadoPca[1,2]
+  tnPca <- tnPca + resultadoPca[2,2]
+  fnPca <- fnPca + resultadoPca[2,1]
 }
 
-precisao <- tp/(tp+fp)
-sensibilidade <- tp/(tp+fn)
-errototal <- (fn+fp)/(tp+fp+tn+fn)
+resultadoFinal.precisao <- tp/(tp+fp)
+resultadoFinal.sensibilidade <- tp/(tp+fn)
+resultadoFinal.errototal <- (fn+fp)/(tp+fp+tn+fn)
+
+resultadoFinalPca.precisao <- tpPca/(tpPca+fpPca)
+resultadoFinalPca.sensibilidade <- tpPca/(tpPca+fnPca)
+resultadoFinalPca.errototal <- (fnPca+fpPca)/(tpPca+fpPca+tnPca+fnPca)
