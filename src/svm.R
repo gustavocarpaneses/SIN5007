@@ -45,6 +45,11 @@ fpPca <- 0
 tnPca <- 0
 fnPca <- 0
 
+tpRelief <- 0
+fpRelief <- 0
+tnRelief <- 0
+fnRelief <- 0
+
 if(exists("trainingFoldPca")){
   remove("trainingFoldPca")
 }
@@ -80,6 +85,11 @@ for(t in 1:k){
   #constrói o modelo baseado no training Fold (PCA)
   modelPca <- svm(trainingFoldPca, trainingFoldClassification)
   
+  #constrói o modelo baseado no training Fold (RELIEF)
+  #quando fizemos o relief identificamos que a última coluna
+  #é uma característica irrelevante, por isso 1:8
+  modelRelief <- svm(trainingFold[,1:8], trainingFoldClassification)
+  
   #summary(model)
   
   #aplica o modelo no fold de teste
@@ -88,11 +98,16 @@ for(t in 1:k){
   #aplica o modelo no fold de teste (PCA)
   predPca <- predict(modelPca, myPcaDataWithoutIdentifierAndClassification[[t]])
   
+  #aplica o modelo no fold de teste (RELIEF)
+  predRelief <- predict(modelRelief, myDataWithoutIdentifierAndClassification[[t]][,1:8])
+  
   resultado <- table(pred, myDataClassification[[t]])
   resultadoPca <- table(predPca, myDataClassification[[t]])
+  resultadoRelief <- table(predRelief, myDataClassification[[t]])
   
   print(resultado)
   print(resultadoPca)
+  print(resultadoRelief)
   
   tp <- tp + resultado[1,1]
   fp <- fp + resultado[1,2]
@@ -103,6 +118,11 @@ for(t in 1:k){
   fpPca <- fpPca + resultadoPca[1,2]
   tnPca <- tnPca + resultadoPca[2,2]
   fnPca <- fnPca + resultadoPca[2,1]
+  
+  tpRelief <- tpRelief + resultadoRelief[1,1]
+  fpRelief <- fpRelief + resultadoRelief[1,2]
+  tnRelief <- tnRelief + resultadoRelief[2,2]
+  fnRelief <- fnRelief + resultadoRelief[2,1]
 }
 
 resultadoFinal.precisao <- tp/(tp+fp)
@@ -112,3 +132,7 @@ resultadoFinal.errototal <- (fn+fp)/(tp+fp+tn+fn)
 resultadoFinalPca.precisao <- tpPca/(tpPca+fpPca)
 resultadoFinalPca.sensibilidade <- tpPca/(tpPca+fnPca)
 resultadoFinalPca.errototal <- (fnPca+fpPca)/(tpPca+fpPca+tnPca+fnPca)
+
+resultadoFinalRelief.precisao <- tpRelief/(tpRelief+fpRelief)
+resultadoFinalRelief.sensibilidade <- tpRelief/(tpRelief+fnRelief)
+resultadoFinalRelief.errototal <- (fnRelief+fpRelief)/(tpRelief+fpRelief+tnRelief+fnRelief)
