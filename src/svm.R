@@ -1,15 +1,32 @@
-#carregando pacotes
 #install.packages("e1071")
-#library("e1071")
+
+#carregando pacotes
+library("e1071")
 
 #carrega os folds
 foldFileName = "C:/temp/sin5007/data/breast-cancer-wisconsin-with-class-names-fold-%d.data"
 
 #kernelType = "linear"
+
 #kernelType = "polynomial"
-#kernelType = "radial"
-kernelType = "sigmoid"
-costOfViolation = 1
+#degreeValue = 3
+#coef0value = 0
+#gammaValue = 1/4
+#gammaValuePca = 1/4
+#gammaValueRelief = 1/4
+
+kernelType = "radial"
+gammaValue = 1/9
+gammaValuePca = 1/4
+gammaValueRelief = 1.3
+
+#kernelType = "sigmoid"
+#gammaValue = 1/9
+#gammaValuePca = 1/4
+#gammaValueRelief = 1/8
+#coef0value = 0
+
+costOfViolation = 0.4
 pcaComponents = 4
 k = 5
 t = 1
@@ -85,15 +102,15 @@ for(t in 1:k){
   }
   
   #constrói o modelo baseado no training Fold (com todas as características)
-  model <- svm(trainingFold, trainingFoldClassification, kernel = kernelType, cost = costOfViolation)
+  model <- svm(trainingFold, trainingFoldClassification, kernel = kernelType, cost = costOfViolation, degree = degreeValue, gamma = gammaValue, coef0 = coef0value)
   
   #constrói o modelo baseado no training Fold (PCA)
-  modelPca <- svm(trainingFoldPca, trainingFoldClassification, kernel = kernelType, cost = costOfViolation)
+  modelPca <- svm(trainingFoldPca, trainingFoldClassification, kernel = kernelType, cost = costOfViolation, degree = degreeValue, gamma = gammaValuePca, coef0 = coef0value)
   
   #constrói o modelo baseado no training Fold (RELIEF)
   #quando fizemos o relief identificamos que a última coluna
   #é uma característica irrelevante, por isso 1:8
-  modelRelief <- svm(trainingFold[,1:8], trainingFoldClassification, kernel = kernelType, cost = costOfViolation)
+  modelRelief <- svm(trainingFold[,1:8], trainingFoldClassification, kernel = kernelType, cost = costOfViolation, degree = degreeValue, gamma = gammaValueRelief, coef0 = coef0value)
   
   #summary(model)
   
@@ -132,10 +149,9 @@ for(t in 1:k){
 
 #precisão - sensibilidade - erro total
 resultadoFinal <- c(tp/(tp+fp), tp/(tp+fn), (fn+fp)/(tp+fp+tn+fn))
-paste(resultadoFinal, collapse = ",")
-
 resultadoFinalPca <- c(tpPca/(tpPca+fpPca), tpPca/(tpPca+fnPca), (fnPca+fpPca)/(tpPca+fpPca+tnPca+fnPca))
-paste(resultadoFinalPca, collapse = ",")
-
 resultadoFinalRelief <- c(tpRelief/(tpRelief+fpRelief), tpRelief/(tpRelief+fnRelief), (fnRelief+fpRelief)/(tpRelief+fpRelief+tnRelief+fnRelief))
+
+paste(resultadoFinal, collapse = ",")
+paste(resultadoFinalPca, collapse = ",")
 paste(resultadoFinalRelief, collapse = ",")
